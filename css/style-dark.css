@@ -73,6 +73,7 @@ Table of Content:
 
 body {
   font-family: "Fira Sans", sans-serif;
+  background-color: slategray;
   /*Section Fix*/
 }
 body h1, body h2, body h3, body h4, body h5, body h6 {
@@ -141,20 +142,6 @@ ul {
 /* End Check_tittle
 ============================================================================================ */
 /* ----------------------------- */
-/* CSS for Shipping Banner */
-.shipping-banner {
-  background-color: #f8d7da;
-  color: #721c24;
-  text-align: center;
-  padding: 10px 0;
-  font-size: 18px;
-  font-weight: bold;
-  position: fixed;
-  top: 0;
-  width: 100%;
-  z-index: 1000;
-}
-
 /* Main Menu css
 ============================================================================================ */
 .navbar.navbar-default {

@@ -1,125 +1,82 @@
-# Introduction
+# Kubernetes E-Commerce Deployment Challenge
 
-This is a sample e-commerce application built for learning purposes.
+## Introduction
 
-Here's how to deploy it on CentOS systems:
+In this project, I deployed an e-commerce website using containerization with Docker and orchestration with Kubernetes (K8s). This challenge covers key aspects of modern web application deployment, ensuring my application is scalable, consistent, and highly available.
 
-## Deploy Pre-Requisites
+## Benefits of Containerization and Kubernetes
 
-1. Install FirewallD
+1. **Scalability**: Automatically adjust to fluctuating traffic.
+2. **Consistency**: Ensure the application runs the same across all environments.
+3. **Availability**: Update the application with zero downtime.
 
-```
-sudo yum install -y firewalld
-sudo systemctl start firewalld
-sudo systemctl enable firewalld
-sudo systemctl status firewalld
-```
+## Prerequisites
 
-## Deploy and Configure Database
+Before starting, I made sure to have:
 
-1. Install MariaDB
+- Docker and Kubernetes CLI tools.
+- A cloud provider account (AWS, Azure, or GCP). Azure was used for this project
+- A GitHub account.
+- E-commerce application source code and database scripts from `kodekloudhub/learning-app-ecommerce`.
 
-```
-sudo yum install -y mariadb-server
-sudo vi /etc/my.cnf
-sudo systemctl start mariadb
-sudo systemctl enable mariadb
-```
+## Step-by-Step Summary
 
-2. Configure firewall for Database
+### Containerize the E-Commerce Website and Database
 
-```
-sudo firewall-cmd --permanent --zone=public --add-port=3306/tcp
-sudo firewall-cmd --reload
-```
+#### 1. Web Application
+- I created a Dockerfile using `php:7.4-apache` as the base image. I built the Docker image and pushed it to Docker Hub. The web application is now containerized and available as a Docker image on Docker Hub, ready for deployment.
 
-3. Configure Database
+#### 2. Database
+- Instead of building a database image from scratch, I opted for the official MariaDB image and prepared an initialization script. The database setup was straightforward, and I have a reliable MariaDB image ready to go.
 
-```
-$ mysql
-MariaDB > CREATE DATABASE ecomdb;
-MariaDB > CREATE USER 'ecomuser'@'localhost' IDENTIFIED BY 'ecompassword';
-MariaDB > GRANT ALL PRIVILEGES ON *.* TO 'ecomuser'@'localhost';
-MariaDB > FLUSH PRIVILEGES;
-```
+### Set Up Kubernetes
 
-> ON a multi-node setup remember to provide the IP address of the web server here: `'ecomuser'@'web-server-ip'`
+#### 1. Cluster Creation
+- I set up an Azure Kubernetes cluster and configured `kubectl` to manage it. With the cluster up and running, I'm ready to start deploying applications.
 
-4. Load Product Inventory Information to database
+### Deploy the Website
 
-Create the db-load-script.sql
+#### 1. Kubernetes Deployment
+- I created a deployment configuration file (`website-deployment.yaml`) and applied it using `kubectl`. The web application is now running on Kubernetes, with pods managed seamlessly.
 
-```
-cat > db-load-script.sql <<-EOF
-USE ecomdb;
-CREATE TABLE products (id mediumint(8) unsigned NOT NULL auto_increment,Name varchar(255) default NULL,Price varchar(255) default NULL, ImageUrl varchar(255) default NULL,PRIMARY KEY (id)) AUTO_INCREMENT=1;
+#### 2. Expose the Website
+- I defined a service (`website-service.yaml`) to expose the deployment to the internet. As a result the e-commerce site is now accessible via a public URL or IP address.
 
-INSERT INTO products (Name,Price,ImageUrl) VALUES ("Laptop","100","c-1.png"),("Drone","200","c-2.png"),("VR","300","c-3.png"),("Tablet","50","c-5.png"),("Watch","90","c-6.png"),("Phone Covers","20","c-7.png"),("Phone","80","c-8.png"),("Laptop","150","c-4.png");
+### Configuration Management
 
-EOF
-```
+#### Feature Toggle
+- I added a feature toggle for dark mode using a ConfigMap and updated the deployment to use it. The website now has a dark mode feature, demonstrating how easily I can manage application features with Kubernetes.
 
-Run sql script
+### Scale the Application
 
-```
+#### Scaling
+- Simulating increased traffic via Apache Bench, I scaled up the number of replicas. The application effortlessly handled the increased load, owed to Kubernetes' powerful scaling capabilities.
 
-sudo mysql < db-load-script.sql
-```
+### Perform a Rolling Update
 
+#### Update and Monitor
+- I updated the web application to include a promotional banner and monitored the rolling update process.
 
-## Deploy and Configure Web
+### Roll Back if Needed
 
-1. Install required packages
+#### Roll Back Deployment
+- To simulate an update causing issues, I rolled back to the previous version. Rolling back was quick and efficient, restoring the application's stability almost instantly.
 
-```
-sudo yum install -y httpd php php-mysqlnd
-sudo firewall-cmd --permanent --zone=public --add-port=80/tcp
-sudo firewall-cmd --reload
-```
+### Autoscale the Application
 
-2. Configure httpd
+#### Horizontal Pod Autoscaler (HPA)
+- I implemented HPA to automatically scale based on CPU usage. The number of pods dynamically adjusted to the load, maintaining optimal performance.
 
-Change `DirectoryIndex index.html` to `DirectoryIndex index.php` to make the php page the default page
+### Implement Liveness and Readiness Probes
 
-```
-sudo sed -i 's/index.html/index.php/g' /etc/httpd/conf/httpd.conf
-```
+#### Probes
+- I added liveness and readiness probes to ensure the application remained responsive and only received traffic when fully ready. Kubernetes proactively managed pod health, restarting unresponsive pods and only routing traffic to ready ones.
 
-3. Start httpd
+### Use ConfigMaps and Secrets
 
-```
-sudo systemctl start httpd
-sudo systemctl enable httpd
-```
+#### Configuration Management
+- I used Secrets for sensitive data like database credentials and ConfigMaps for non-sensitive configuration. This increased security by reducing risks from plaintext secrets.
 
-4. Download code
+## Conclusion
 
-```
-sudo yum install -y git
-sudo git clone https://github.com/kodekloudhub/learning-app-ecommerce.git /var/www/html/
-```
-
-5. Update index.php
-
-Update [index.php](https://github.com/kodekloudhub/learning-app-ecommerce/blob/13b6e9ddc867eff30368c7e4f013164a85e2dccb/index.php#L107) file to connect to the right database server. In this case `localhost` since the database is on the same server.
-
-```
-sudo sed -i 's/172.20.1.101/localhost/g' /var/www/html/index.php
-
-              <?php
-                        $link = mysqli_connect('172.20.1.101', 'ecomuser', 'ecompassword', 'ecomdb');
-                        if ($link) {
-                        $res = mysqli_query($link, "select * from products;");
-                        while ($row = mysqli_fetch_assoc($res)) { ?>
-```
-
-> ON a multi-node setup remember to provide the IP address of the database server here.
-```
-sudo sed -i 's/172.20.1.101/localhost/g' /var/www/html/index.php
-```
-
-6. Test
-
-```
-curl http://localhost
-```
+By completing this challenge, I have successfully deployed and managed a scalable, consistent, and resilient e-commerce application using Docker and Kubernetes. This experience has enhanced my understanding of modern DevOps practices and demonstrated my technical skills in containerization and orchestration.

@@ -21,6 +21,16 @@
 
         <!-- Theme style CSS -->
         <link href="css/style.css" rel="stylesheet">
+        <!-- Dynamic Theme CSS -->
+        <?php
+            $darkModeTrue = getenv('FEATURE_DARK_MODE') === 'true';
+
+            if ($darkModeTrue) {
+                echo "<link rel=\"stylesheet\" href=\"css/style-dark.css\">\n";
+            } else {
+                echo "<link rel=\"stylesheet\" href=\"css/style-light.css\">\n";
+            }
+        ?>
 <!--        <link href="css/responsive.css" rel="stylesheet">  -->
 
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -31,6 +41,11 @@
         <![endif]-->
     </head>
     <body>
+        <!-- Free Shipping Banner -->
+        <div class="shipping-banner">
+            Free shipping on all orders over $99!
+        </div>
+
         <!--==========Main Header==========-->
         <header class="main_header_area">
             <nav class="navbar navbar-default navbar-fixed-top" id="main_navbar">
